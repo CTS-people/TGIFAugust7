@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nightlane — Traffic Racer</title>
+<style>
+  :root{
+    --bg-deep:#0d1017;
+    --bg-panel:#151a24;
+    --bg-panel-2:#1b2130;
+    --asphalt-1:#20242c;
+    --asphalt-2:#2a2f39;
+    --line-amber:#f2b33d;
+    --line-amber-dim:#8a6a2c;
+    --accent-teal:#3fd6c5;
+    --accent-teal-dim:#1e6e64;
+    --danger:#ef4a4a;
+    --text-hi:#f4f1e8;
+    --text-mid:#a9afbc;
+    --text-dim:#5c6372;
+    --font-display:'Rajdhani',sans-serif;
+    --font-body:'Inter',system-ui,sans-serif;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  html,body{
+    width:100%;height:100%;
+    background:var(--bg-deep);
+    color:var(--text-hi);
+    font-family:var(--font-body);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  #app{
+    position:relative;
+    width:100%;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .screen{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+  }
+  .hidden{display:none !important;}
+
+  /* ---------- INFO SCREEN ---------- */
+  #screen-info{
+    background:
+      radial-gradient(ellipse at 50% -10%, #1a2230 0%, var(--bg-deep) 60%);
+    gap:22px;
+    padding:24px;
+    text-align:center;
+  }
+  .brand{
+    font-family:var(--font-display);
+    font-weight:700;
+    letter-spacing:.14em;
+    font-size:clamp(30px,6vw,48px);
+    color:var(--text-hi);
+    text-transform:uppercase;
+  }
+  .brand span{color:var(--line-amber);}
+  .tagline{
+    color:var(--text-mid);
+    font-size:13px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-top:-14px;
+  }
+
+  .card{
+    background:var(--bg-panel);
+    border:1px solid #262d3a;
+    border-radius:14px;
+    padding:28px 30px;
+    width:min(380px,88vw);
+    box-shadow:0 20px 60px -20px rgba(0,0,0,.7);
+  }
+  .field{margin-bottom:16px;text-align:left;}
+  .field label{
+    display:block;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin-bottom:6px;
+  }
+  .field input[type="text"]{
+    width:100%;
+    background:var(--asphalt-1);
+    border:1px solid #313847;
+    border-radius:8px;
+    padding:10px 12px;
+    color:var(--text-hi);
+    font-family:var(--font-body);
+    font-size:14px;
+    outline:none;
+    transition:border-color .15s;
+  }
+  .field input[type="text"]:focus{border-color:var(--accent-teal);}
+
+  .loc-options{display:flex;gap:8px;}
+  .loc-opt{flex:1;}
+  .loc-opt input{display:none;}
+  .loc-opt label{
+    display:block;
+    text-align:center;
+    padding:10px 4px;
+    border:1px solid #313847;
+    border-radius:8px;
+    background:var(--asphalt-1);
+    color:var(--text-mid);
+    font-size:12px;
+    letter-spacing:.02em;
+    text-transform:none;
+    cursor:pointer;
+    transition:all .15s;
+  }
+  .loc-opt input:checked + label{
+    border-color:var(--accent-teal);
+    background:rgba(63,214,197,.12);
+    color:var(--accent-teal);
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    width:100%;
+    padding:13px 18px;
+    border-radius:9px;
+    border:none;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:transform .1s, filter .15s;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{
+    background:linear-gradient(180deg,#f2b33d,#d99323);
+    color:#1a1200;
+  }
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{
+    background:transparent;
+    border:1px solid #313847;
+    color:var(--text-mid);
+  }
+  .btn-ghost:hover{border-color:var(--accent-teal);color:var(--accent-teal);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .hint-err{color:var(--danger);font-size:12px;margin-top:2px;min-height:14px;}
+
+  .controls-legend{
+    display:flex;
+    gap:18px;
+    color:var(--text-dim);
+    font-size:11px;
+    letter-spacing:.04em;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .controls-legend kbd{
+    background:var(--asphalt-2);
+    border:1px solid #3a4152;
+    border-radius:4px;
+    padding:2px 6px;
+    color:var(--text-mid);
+    font-family:var(--font-body);
+  }
+
+  /* ---------- GAME SCREEN ---------- */
+  #screen-game{background:var(--bg-deep);}
+  #gameWrap{
+    position:relative;
+    width:100%;
+    height:100%;
+  }
+  canvas#gameCanvas{
+    display:block;
+    width:100%;
+    height:100%;
+  }
+
+  .hud{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    font-family:var(--font-display);
+  }
+  .hud-top{
+    position:absolute;
+    top:16px;left:0;right:0;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    padding:0 20px;
+  }
+  .hud-chip{
+    background:rgba(13,16,23,.72);
+    border:1px solid #2a3140;
+    border-radius:10px;
+    padding:8px 14px;
+    backdrop-filter:blur(4px);
+    min-width:110px;
+  }
+  .hud-chip .lbl{
+    font-size:10px;
+    letter-spacing:.12em;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    font-family:var(--font-body);
+  }
+  .hud-chip .val{
+    font-size:22px;
+    font-weight:700;
+    color:var(--text-hi);
+    letter-spacing:.02em;
+  }
+  .hud-chip.score .val{color:var(--line-amber);}
+  .hud-chip.timer .val{color:var(--accent-teal);}
+
+  .progress-wrap{
+    position:absolute;
+    top:16px;left:50%;
+    transform:translateX(-50%);
+    width:min(360px,50vw);
+  }
+  .progress-track{
+    height:8px;
+    border-radius:5px;
+    background:rgba(255,255,255,.08);
+    border:1px solid #2a3140;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,var(--accent-teal),var(--line-amber));
+    transition:width .1s linear;
+  }
+  .progress-label{
+    text-align:center;
+    font-size:10px;
+    color:var(--text-dim);
+    margin-top:4px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-family:var(--font-body);
+  }
+
+  .speed-dial{
+    position:absolute;
+    bottom:20px;left:20px;
+    width:150px;height:100px;
+  }
+
+  .steer-legend{
+    position:absolute;
+    bottom:20px;right:20px;
+    text-align:right;
+    color:var(--text-dim);
+    font-size:11px;
+    font-family:var(--font-body);
+    letter-spacing:.03em;
+  }
+  .steer-legend kbd{
+    background:rgba(255,255,255,.06);
+    border:1px solid #3a4152;
+    border-radius:4px;
+    padding:2px 6px;
+    color:var(--text-mid);
+  }
+
+  .countdown-overlay{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);
+    font-size:120px;
+    font-weight:700;
+    color:var(--line-amber);
+    text-shadow:0 0 40px rgba(242,179,61,.6);
+    background:rgba(13,16,23,.35);
+  }
+
+  /* ---------- RESULT SCREEN ---------- */
+  #screen-result{
+    background:radial-gradient(ellipse at 50% 110%, #1a2230 0%, var(--bg-deep) 60%);
+    gap:20px;
+  }
+  .result-badge{
+    font-family:var(--font-display);
+    font-size:14px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    padding:6px 16px;
+    border-radius:20px;
+    font-weight:700;
+  }
+  .result-badge.completed{background:rgba(63,214,197,.15);color:var(--accent-teal);border:1px solid var(--accent-teal-dim);}
+  .result-badge.crashed{background:rgba(239,74,74,.15);color:var(--danger);border:1px solid #7a2727;}
+  .result-badge.incomplete{background:rgba(242,179,61,.15);color:var(--line-amber);border:1px solid var(--line-amber-dim);}
+
+  .result-title{
+    font-family:var(--font-display);
+    font-size:38px;
+    font-weight:700;
+    letter-spacing:.03em;
+  }
+
+  .result-stats{
+    display:flex;
+    gap:14px;
+  }
+  .stat-box{
+    background:var(--bg-panel);
+    border:1px solid #262d3a;
+    border-radius:10px;
+    padding:14px 22px;
+    text-align:center;
+    min-width:110px;
+  }
+  .stat-box .lbl{font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;}
+  .stat-box .val{font-family:var(--font-display);font-size:24px;font-weight:700;margin-top:4px;color:var(--text-hi);}
+
+  .result-actions{display:flex;gap:12px;margin-top:6px;}
+  .result-actions .btn{width:auto;padding:12px 26px;}
+
+  .admin-link{
+    position:fixed;
+    top:14px;right:14px;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text-mid);
+    cursor:pointer;
+    z-index:100;
+    font-family:var(--font-body);
+    font-weight:600;
+    background:rgba(21,26,36,.75);
+    border:1px solid #313847;
+    border-radius:20px;
+    padding:6px 14px;
+    backdrop-filter:blur(4px);
+    transition:all .15s;
+  }
+  .admin-link:hover{color:var(--accent-teal);border-color:var(--accent-teal-dim);}
+
+  /* ---------- ADMIN MODAL ---------- */
+  #adminOverlay{
+    position:fixed;inset:0;
+    background:rgba(6,8,12,.82);
+    display:flex;align-items:center;justify-content:center;
+    z-index:50;
+  }
+  .admin-modal{
+    background:var(--bg-panel);
+    border:1px solid #262d3a;
+    border-radius:14px;
+    width:min(880px,92vw);
+    max-height:86vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.8);
+  }
+  .admin-modal-header{
+    padding:18px 22px;
+    border-bottom:1px solid #232a37;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .admin-modal-header h2{
+    font-family:var(--font-display);
+    font-size:18px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+  .icon-btn{
+    background:none;border:none;color:var(--text-dim);
+    font-size:20px;cursor:pointer;line-height:1;
+  }
+  .icon-btn:hover{color:var(--text-hi);}
+
+  .admin-modal-body{padding:20px 22px;overflow-y:auto;flex:1;}
+
+  .pw-gate{
+    display:flex;flex-direction:column;gap:14px;align-items:center;
+    padding:20px 0 6px;
+  }
+  .pw-gate input{
+    width:220px;
+    background:var(--asphalt-1);
+    border:1px solid #313847;
+    border-radius:8px;
+    padding:10px 12px;
+    color:var(--text-hi);
+    font-size:14px;
+    text-align:center;
+    outline:none;
+  }
+  .pw-gate input:focus{border-color:var(--accent-teal);}
+  .pw-gate .btn{width:220px;}
+
+  table.records{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  table.records th{
+    text-align:left;
+    font-size:10px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    padding:8px 10px;
+    border-bottom:1px solid #262d3a;
+  }
+  table.records td{
+    padding:8px 10px;
+    border-bottom:1px solid #1c222c;
+    color:var(--text-mid);
+  }
+  table.records tr:hover td{background:rgba(255,255,255,.02);color:var(--text-hi);}
+  .status-pill{
+    font-size:11px;
+    padding:2px 9px;
+    border-radius:12px;
+    font-weight:600;
+  }
+  .status-pill.completed{background:rgba(63,214,197,.15);color:var(--accent-teal);}
+  .status-pill.crashed{background:rgba(239,74,74,.15);color:var(--danger);}
+  .status-pill.incomplete{background:rgba(242,179,61,.15);color:var(--line-amber);}
+
+  .admin-toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .admin-toolbar .btn{width:auto;padding:9px 16px;font-size:13px;}
+  .admin-note{color:var(--text-dim);font-size:11px;}
+  .empty-state{
+    text-align:center;
+    padding:40px 10px;
+    color:var(--text-dim);
+    font-size:13px;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ INFO / REGISTRATION SCREEN ============ -->
+  <div id="screen-info" class="screen">
+    <div>
+      <div class="brand">Night<span>lane</span></div>
+      <div class="tagline">Dodge traffic · manage your speed · beat the clock</div>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <label for="inputName">Your Name</label>
+        <input type="text" id="inputName" placeholder="e.g. Priya Sharma" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="inputEmpId">Employee ID</label>
+        <input type="text" id="inputEmpId" placeholder="e.g. EMP10432" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Location</label>
+        <div class="loc-options">
+          <div class="loc-opt">
+            <input type="radio" name="location" id="locAmericas" value="Americas">
+            <label for="locAmericas">Americas</label>
+          </div>
+          <div class="loc-opt">
+            <input type="radio" name="location" id="locEmea" value="UK/EMEA">
+            <label for="locEmea">UK/EMEA</label>
+          </div>
+          <div class="loc-opt">
+            <input type="radio" name="location" id="locIndia" value="India">
+            <label for="locIndia">India</label>
+          </div>
+        </div>
+      </div>
+      <div class="hint-err" id="infoError"></div>
+      <button class="btn btn-primary" id="btnStart">Start Race</button>
+    </div>
+
+    <div class="controls-legend">
+      <span><kbd>&larr;</kbd><kbd>&rarr;</kbd> Steer</span>
+      <span><kbd>&uarr;</kbd> Accelerate</span>
+      <span><kbd>&darr;</kbd> Brake</span>
+    </div>
+  </div>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <div id="screen-game" class="screen hidden">
+    <div id="gameWrap">
+      <canvas id="gameCanvas"></canvas>
+      <div class="hud">
+        <div class="hud-top">
+          <div class="hud-chip score">
+            <div class="lbl">Score</div>
+            <div class="val" id="hudScore">0</div>
+          </div>
+          <div class="hud-chip timer">
+            <div class="lbl">Time</div>
+            <div class="val" id="hudTimer">00:00.0</div>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">0% of race distance</div>
+        </div>
+        <div id="narrowWarning" class="hidden" style="position:absolute;top:64px;left:50%;transform:translateX(-50%);color:var(--danger);font-family:var(--font-display);font-weight:700;letter-spacing:.08em;font-size:14px;text-shadow:0 0 12px rgba(239,74,74,.7);">⚠ ROAD NARROWS — FINAL STRETCH</div>
+        <svg class="speed-dial" id="speedDial" viewBox="0 0 150 100"></svg>
+        <div class="steer-legend">
+          <div><kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer</div>
+          <div><kbd>&uarr;</kbd> speed up &nbsp; <kbd>&darr;</kbd> slow down</div>
+        </div>
+      </div>
+      <div class="countdown-overlay hidden" id="countdownOverlay">3</div>
+    </div>
+  </div>
+
+  <!-- ============ RESULT SCREEN ============ -->
+  <div id="screen-result" class="screen hidden">
+    <div class="result-badge" id="resultBadge">COMPLETED</div>
+    <div class="result-title" id="resultTitle">Race Finished</div>
+    <div class="result-stats">
+      <div class="stat-box"><div class="lbl">Time Taken</div><div class="val" id="resultTime">00:00.0</div></div>
+      <div class="stat-box"><div class="lbl">Score</div><div class="val" id="resultScore">0</div></div>
+      <div class="stat-box"><div class="lbl">Top Speed</div><div class="val" id="resultTopSpeed">0 km/h</div></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-primary" id="btnPlayAgain" style="width:auto;">Play Again</button>
+      <button class="btn btn-ghost" id="btnExit" style="width:auto;">Exit</button>
+    </div>
+    <div class="admin-note" id="exitNote" style="min-height:14px;"></div>
+  </div>
+
+  <button class="admin-link" id="adminLinkBtn" title="Admin — view records and export report">⚙ Admin</button>
+</div>
+
+<!-- ============ ADMIN MODAL ============ -->
+<div id="adminOverlay" class="hidden">
+  <div class="admin-modal">
+    <div class="admin-modal-header">
+      <h2>Race Records — Admin</h2>
+      <button class="icon-btn" id="adminCloseBtn">&times;</button>
+    </div>
+    <div class="admin-modal-body" id="adminBody">
+      <!-- populated by JS: either password gate or table -->
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================================
+   CONFIG
+   ========================================================================= */
+const CONFIG = {
+  MAX_SPEED_KMH: 300,
+  MIN_SPEED_KMH: 0,
+  ACCEL_KMH_PER_S: 95,        // how fast Up key builds speed
+  BRAKE_KMH_PER_S: 140,       // how fast Down key sheds speed
+  DRAG_KMH_PER_S: 22,         // natural deceleration when no key held
+  RACE_SECONDS_AT_MAX_SPEED: 90,   // race is calibrated so max speed the whole way = 90s
+  HARD_TIME_LIMIT_S: 240,    // safety cap so an overly slow run still ends
+  PX_PER_METER: 7,
+  STEER_ACCEL: 2600,          // px/s^2 lateral acceleration while steering
+  STEER_DAMPING: 6.0,         // how quickly lateral velocity settles when not steering
+  LANE_COUNT: 3,
+  ADMIN_PASSWORD_HASH: "31c61e22b2ae8398a4f6706fc3a5083e5444af0200ce59817b85da03bb8b7643", // sha256("Racer#2026")
+
+  // ---- Centralized tracking (optional) ----
+  // If REMOTE_ENDPOINT_URL is set, every completed/crashed/incomplete run is also POSTed
+  // to this URL so all players' results land in one shared place (e.g. a Google Sheet).
+  // See the accompanying "central-tracking-setup" instructions for how to get this URL.
+  // Leave REMOTE_ENDPOINT_URL as "" to disable remote sync and keep this fully offline.
+  REMOTE_ENDPOINT_URL: "https://script.google.com/macros/s/AKfycby6Pb5bYQYZtvR59vpY0SElV8Y23m8I3AqIsiXRCHapFGRZ4goR9lUl-LT0U9xfOKLC6Q/exec",
+  REMOTE_SHARED_SECRET: "roadfighter"
+};
+CONFIG.RACE_DISTANCE_M = (CONFIG.MAX_SPEED_KMH / 3.6) * CONFIG.RACE_SECONDS_AT_MAX_SPEED;
+CONFIG.NARROW_ZONE_SECONDS = 15; // final stretch, timed as if still at max speed
+CONFIG.NARROW_ZONE_DISTANCE_M = (CONFIG.MAX_SPEED_KMH / 3.6) * CONFIG.NARROW_ZONE_SECONDS;
+CONFIG.NARROW_WIDTH_FACTOR = 0.6; // road shrinks to 60% of its regular width in the final stretch
+
+const STORAGE_KEY = "nightlane_race_records_v1";
+
+/* =========================================================================
+   DOM REFS
+   ========================================================================= */
+const screens = {
+  info: document.getElementById('screen-info'),
+  game: document.getElementById('screen-game'),
+  result: document.getElementById('screen-result'),
+};
+function showScreen(name){
+  Object.values(screens).forEach(s => s.classList.add('hidden'));
+  screens[name].classList.remove('hidden');
+}
+
+const inputName = document.getElementById('inputName');
+const inputEmpId = document.getElementById('inputEmpId');
+const infoError = document.getElementById('infoError');
+const btnStart = document.getElementById('btnStart');
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const gameWrap = document.getElementById('gameWrap');
+
+const hudScore = document.getElementById('hudScore');
+const hudTimer = document.getElementById('hudTimer');
+const progressFill = document.getElementById('progressFill');
+const progressLabel = document.getElementById('progressLabel');
+const speedDial = document.getElementById('speedDial');
+const countdownOverlay = document.getElementById('countdownOverlay');
+
+const resultBadge = document.getElementById('resultBadge');
+const resultTitle = document.getElementById('resultTitle');
+const resultTime = document.getElementById('resultTime');
+const resultScore = document.getElementById('resultScore');
+const resultTopSpeed = document.getElementById('resultTopSpeed');
+const btnPlayAgain = document.getElementById('btnPlayAgain');
+
+const adminLinkBtn = document.getElementById('adminLinkBtn');
+const adminOverlay = document.getElementById('adminOverlay');
+const adminCloseBtn = document.getElementById('adminCloseBtn');
+const adminBody = document.getElementById('adminBody');
+
+/* =========================================================================
+   CANVAS SIZING
+   ========================================================================= */
+let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+function resizeCanvas(){
+  const rect = gameWrap.getBoundingClientRect();
+  W = rect.width; H = rect.height;
+  canvas.width = Math.round(W * DPR);
+  canvas.height = Math.round(H * DPR);
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  buildRoadTexture();
+}
+window.addEventListener('resize', resizeCanvas);
+
+/* =========================================================================
+   ROAD TEXTURE (pre-rendered tile, subtle asphalt speckle)
+   ========================================================================= */
+let roadPattern = null;
+let roadTileSize = 128;
+function buildRoadTexture(){
+  const tile = document.createElement('canvas');
+  tile.width = tile.height = roadTileSize;
+  const tctx = tile.getContext('2d');
+  tctx.fillStyle = '#22262f';
+  tctx.fillRect(0,0,roadTileSize,roadTileSize);
+  // subtle speckles
+  for(let i=0;i<220;i++){
+    const x = Math.random()*roadTileSize;
+    const y = Math.random()*roadTileSize;
+    const r = Math.random()*1.1 + 0.2;
+    const shade = Math.random() > 0.5 ? 255 : 0;
+    tctx.fillStyle = `rgba(${shade},${shade},${shade},${(Math.random()*0.05+0.02).toFixed(3)})`;
+    tctx.beginPath();
+    tctx.arc(x,y,r,0,Math.PI*2);
+    tctx.fill();
+  }
+  // faint diagonal streaks (tire wear)
+  tctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  tctx.lineWidth = 6;
+  for(let i=0;i<4;i++){
+    tctx.beginPath();
+    tctx.moveTo(Math.random()*roadTileSize, 0);
+    tctx.lineTo(Math.random()*roadTileSize, roadTileSize);
+    tctx.stroke();
+  }
+  roadPattern = ctx.createPattern(tile, 'repeat');
+}
+
+/* =========================================================================
+   GAME STATE
+   ========================================================================= */
+let player, traffic, keys, raceState, rafId;
+let currentPlayerInfo = null;
+
+function resetGameState(){
+  const narrowEl = document.getElementById('narrowWarning');
+  if(narrowEl) narrowEl.classList.add('hidden');
+  player = {
+    x: 0,          // set on start (center of road)
+    vx: 0,
+    speedKmh: 40,
+    tilt: 0,
+  };
+  traffic = [];
+  keys = { left:false, right:false, up:false, down:false };
+  raceState = {
+    phase: 'idle',      // idle -> countdown -> running -> ended
+    startTime: 0,
+    elapsed: 0,
+    distanceM: 0,
+    score: 0,
+    scrollOffset: 0,
+    spawnTimer: 0,
+    topSpeedReached: 0,
+    countdownValue: 3,
+    countdownTimer: 0,
+    endedStatus: null,  // 'completed' | 'crashed' | 'incomplete'
+    lastFrameT: 0,
+    redChangesCompleted: 0, // total distinct red cars that have finished a lane change so far
+    roadWidthFactor: 1,      // eases toward CONFIG.NARROW_WIDTH_FACTOR in the final stretch
+    narrowZoneAnnounced: false,
+  };
+}
+
+/* =========================================================================
+   INPUT
+   ========================================================================= */
+window.addEventListener('keydown', (e)=>{
+  if(raceState.phase !== 'running') return;
+  switch(e.key){
+    case 'ArrowLeft': case 'a': case 'A': keys.left = true; e.preventDefault(); break;
+    case 'ArrowRight': case 'd': case 'D': keys.right = true; e.preventDefault(); break;
+    case 'ArrowUp': case 'w': case 'W': keys.up = true; e.preventDefault(); break;
+    case 'ArrowDown': case 's': case 'S': keys.down = true; e.preventDefault(); break;
+  }
+});
+window.addEventListener('keyup', (e)=>{
+  switch(e.key){
+    case 'ArrowLeft': case 'a': case 'A': keys.left = false; break;
+    case 'ArrowRight': case 'd': case 'D': keys.right = false; break;
+    case 'ArrowUp': case 'w': case 'W': keys.up = false; break;
+    case 'ArrowDown': case 's': case 'S': keys.down = false; break;
+  }
+});
+
+/* =========================================================================
+   ROAD GEOMETRY HELPERS
+   ========================================================================= */
+function roadMetrics(){
+  const widthFactor = (raceState && raceState.roadWidthFactor) ? raceState.roadWidthFactor : 1;
+  const roadWidth = Math.min(W * 0.62, 460) * widthFactor;
+  const roadLeft = (W - roadWidth) / 2;
+  const roadRight = roadLeft + roadWidth;
+  const laneWidth = roadWidth / CONFIG.LANE_COUNT;
+  return { roadWidth, roadLeft, roadRight, laneWidth };
+}
+function laneCenterX(laneIndex){
+  const { roadLeft, laneWidth } = roadMetrics();
+  return roadLeft + laneWidth * (laneIndex + 0.5);
+}
+
+/* =========================================================================
+   DIFFICULTY CURVE
+   ========================================================================= */
+function difficultyFactor(elapsedS){
+  // ramps 0 -> 1 over the first RACE_SECONDS_AT_MAX_SPEED seconds, then holds at 1
+  return Math.min(1, elapsedS / CONFIG.RACE_SECONDS_AT_MAX_SPEED);
+}
+function currentSpawnInterval(elapsedS){
+  const d = difficultyFactor(elapsedS);
+  return 1.5 - d * 1.0; // 1.5s -> 0.5s
+}
+function currentTrafficSpeedRange(elapsedS){
+  const d = difficultyFactor(elapsedS);
+  return { min: 40 + d*40, max: 110 + d*130 }; // widens & climbs with difficulty
+}
+
+/* =========================================================================
+   SPAWNING
+   ========================================================================= */
+const CAR_COLORS = ['#e2574c','#e8e2d0','#d9b23c','#6c86a8','#9a7fd1','#5fae7c'];
+const RED_COLOR = '#e2574c';
+const LANE_CHANGE_SPEED_PX_S = 165; // lateral speed while a car is swerving lanes
+const MIN_TOTAL_RED_LANE_CHANGES = 8; // at least this many distinct red cars must change lanes over the full race
+
+function makeTrafficCar(lane, spd, color, yOverride, cooldownOverride){
+  const isChanger = color === RED_COLOR;
+  return {
+    lane,
+    x: laneCenterX(lane),
+    y: yOverride !== undefined ? yOverride : (-140 - Math.random()*80),
+    w: 34, h: 62,
+    speedKmh: spd,
+    color,
+    passed: false,
+    isChanger,
+    changing: false,
+    targetLane: lane,
+    tilt: 0,
+    countedChange: false, // whether this car has already been tallied toward the race's lane-change quota
+    laneChangeCooldown: isChanger ? (cooldownOverride !== undefined ? cooldownOverride : (1.2 + Math.random()*2.0)) : Infinity,
+  };
+}
+
+function spawnTrafficCar(elapsedS){
+  const lane = Math.floor(Math.random() * CONFIG.LANE_COUNT);
+  const range = currentTrafficSpeedRange(elapsedS);
+  const spd = range.min + Math.random() * (range.max - range.min);
+  const color = CAR_COLORS[Math.floor(Math.random()*CAR_COLORS.length)];
+  traffic.push(makeTrafficCar(lane, spd, color));
+}
+
+function countPendingRedChangers(){
+  // red cars currently on track that haven't completed a lane change yet
+  return traffic.reduce((n,c) => n + (c.isChanger && !c.countedChange ? 1 : 0), 0);
+}
+
+// Makes sure the race delivers at least MIN_TOTAL_RED_LANE_CHANGES lane changes in total,
+// spread across the run one car at a time — never a simultaneous cluster.
+function ensureLaneChangeQuota(elapsedS){
+  const totalDuration = CONFIG.RACE_SECONDS_AT_MAX_SPEED;
+  const expectedByNow = Math.ceil(MIN_TOTAL_RED_LANE_CHANGES * Math.min(1, elapsedS / totalDuration));
+  const accountedFor = raceState.redChangesCompleted + countPendingRedChangers();
+  if(accountedFor < expectedByNow){
+    const lane = Math.floor(Math.random() * CONFIG.LANE_COUNT);
+    const range = currentTrafficSpeedRange(elapsedS);
+    const spd = range.min + Math.random() * (range.max - range.min);
+    // a short cooldown so this catch-up car changes lanes soon and keeps the quota on schedule
+    traffic.push(makeTrafficCar(lane, spd, RED_COLOR, undefined, 0.4 + Math.random()*0.6));
+  }
+}
+
+/* =========================================================================
+   UPDATE
+   ========================================================================= */
+function updatePlayerSpeed(dt){
+  if(keys.up){
+    player.speedKmh += CONFIG.ACCEL_KMH_PER_S * dt;
+  } else if(keys.down){
+    player.speedKmh -= CONFIG.BRAKE_KMH_PER_S * dt;
+  } else {
+    // natural drag toward a comfortable cruise, gently down
+    player.speedKmh -= CONFIG.DRAG_KMH_PER_S * dt;
+  }
+  player.speedKmh = Math.max(CONFIG.MIN_SPEED_KMH, Math.min(CONFIG.MAX_SPEED_KMH, player.speedKmh));
+  raceState.topSpeedReached = Math.max(raceState.topSpeedReached, player.speedKmh);
+}
+
+function updatePlayerSteer(dt){
+  const { roadLeft, roadRight } = roadMetrics();
+  let ax = 0;
+  if(keys.left) ax -= CONFIG.STEER_ACCEL;
+  if(keys.right) ax += CONFIG.STEER_ACCEL;
+  player.vx += ax * dt;
+  // damping
+  player.vx -= player.vx * Math.min(1, CONFIG.STEER_DAMPING * dt);
+  player.x += player.vx * dt;
+
+  const halfCar = 17;
+  if(player.x < roadLeft + halfCar){ player.x = roadLeft + halfCar; player.vx = Math.max(0, player.vx); }
+  if(player.x > roadRight - halfCar){ player.x = roadRight - halfCar; player.vx = Math.min(0, player.vx); }
+
+  player.tilt = Math.max(-0.28, Math.min(0.28, player.vx * 0.0022));
+}
+
+function updateTraffic(dt){
+  const playerSpeedMs = player.speedKmh / 3.6;
+  for(let i = traffic.length - 1; i >= 0; i--){
+    const car = traffic[i];
+    const carSpeedMs = car.speedKmh / 3.6;
+    const relSpeedMs = playerSpeedMs - carSpeedMs; // positive => car approaches player
+    car.y += relSpeedMs * CONFIG.PX_PER_METER * dt;
+
+    if(car.isChanger){
+      updateCarLaneChange(car, dt);
+    } else {
+      const lc = laneCenterX(car.lane);
+      car.x += (lc - car.x) * Math.min(1, dt * 4);
+    }
+
+    if(!car.passed && car.y > playerScreenY() + 40){
+      car.passed = true;
+      raceState.score += 25; // near-miss / overtake bonus
+    }
+    if(car.y > H + 120 || car.y < -260){
+      traffic.splice(i,1);
+    }
+  }
+}
+
+function playerScreenY(){
+  return H * 0.76;
+}
+
+function updateCarLaneChange(car, dt){
+  if(car.changing){
+    const targetX = laneCenterX(car.targetLane);
+    const diff = targetX - car.x;
+    const step = LANE_CHANGE_SPEED_PX_S * dt;
+    if(Math.abs(diff) <= step){
+      car.x = targetX;
+      car.lane = car.targetLane;
+      car.changing = false;
+      car.tilt = 0;
+      if(!car.countedChange){
+        car.countedChange = true;
+        raceState.redChangesCompleted += 1;
+      }
+      car.laneChangeCooldown = 1.5 + Math.random()*2.5;
+    } else {
+      car.x += Math.sign(diff) * step;
+      car.tilt = Math.sign(diff) * 0.22;
+    }
+    return;
+  }
+
+  car.laneChangeCooldown -= dt;
+  // only start a fresh swerve while comfortably above the player, so it stays fair to react to
+  if(car.laneChangeCooldown <= 0 && car.y < H * 0.55 && car.y > -60){
+    const options = [0,1,2].filter(l => l !== car.lane);
+    car.targetLane = options[Math.floor(Math.random()*options.length)];
+    car.changing = true;
+    return;
+  }
+  const lc = laneCenterX(car.lane);
+  car.x += (lc - car.x) * Math.min(1, dt * 4);
+}
+
+function checkCollision(){
+  const py = playerScreenY();
+  const pw = 34, ph = 60;
+  const px = player.x;
+  for(const car of traffic){
+    if(Math.abs(car.y - py) < (ph + car.h) / 2 - 6){
+      if(Math.abs(car.x - px) < (pw + car.w) / 2 - 6){
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function updateRace(dt){
+  const rs = raceState;
+  rs.elapsed += dt;
+
+  updatePlayerSpeed(dt);
+  updatePlayerSteer(dt);
+
+  const speedMs = player.speedKmh / 3.6;
+  rs.distanceM += speedMs * dt;
+  rs.scrollOffset += speedMs * CONFIG.PX_PER_METER * dt;
+  rs.score += speedMs * dt * 1.6;
+
+  const distanceRemaining = CONFIG.RACE_DISTANCE_M - rs.distanceM;
+  const targetWidthFactor = distanceRemaining <= CONFIG.NARROW_ZONE_DISTANCE_M ? CONFIG.NARROW_WIDTH_FACTOR : 1;
+  rs.roadWidthFactor += (targetWidthFactor - rs.roadWidthFactor) * Math.min(1, dt * 2.5);
+  if(targetWidthFactor < 1 && !rs.narrowZoneAnnounced){
+    rs.narrowZoneAnnounced = true;
+  }
+
+  rs.spawnTimer -= dt;
+  if(rs.spawnTimer <= 0){
+    spawnTrafficCar(rs.elapsed);
+    rs.spawnTimer = currentSpawnInterval(rs.elapsed) * (0.75 + Math.random()*0.5);
+  }
+
+  updateTraffic(dt);
+  ensureLaneChangeQuota(rs.elapsed);
+
+  if(checkCollision()){
+    endRace('crashed');
+    return;
+  }
+  if(rs.distanceM >= CONFIG.RACE_DISTANCE_M){
+    endRace('completed');
+    return;
+  }
+  if(rs.elapsed >= CONFIG.HARD_TIME_LIMIT_S){
+    endRace('incomplete');
+    return;
+  }
+}
+
+/* =========================================================================
+   RENDER
+   ========================================================================= */
+function render(){
+  ctx.clearRect(0,0,W,H);
+
+  // sky / shoulder background
+  const bgGrad = ctx.createLinearGradient(0,0,0,H);
+  bgGrad.addColorStop(0, '#0c1018');
+  bgGrad.addColorStop(1, '#141926');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0,0,W,H);
+
+  const { roadWidth, roadLeft, roadRight, laneWidth } = roadMetrics();
+
+  // road surface with subtle texture
+  ctx.save();
+  ctx.translate(roadLeft, 0);
+  if(roadPattern){
+    ctx.fillStyle = roadPattern;
+    ctx.save();
+    ctx.translate(0, raceState.scrollOffset % roadTileSize);
+    ctx.fillRect(-roadLeft, -roadTileSize, roadWidth + roadLeft*2, H + roadTileSize*2);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = '#22262f';
+    ctx.fillRect(0,0,roadWidth,H);
+  }
+  ctx.restore();
+
+  // vignette edges of road (grass shoulders)
+  ctx.fillStyle = '#161a22';
+  ctx.fillRect(0,0,roadLeft,H);
+  ctx.fillRect(roadRight,0,W-roadRight,H);
+  ctx.fillStyle = 'rgba(242,179,61,0.55)';
+  ctx.fillRect(roadLeft-3,0,3,H);
+  ctx.fillRect(roadRight,0,3,H);
+
+  // lane dashes
+  const dashLen = 34, gapLen = 26, period = dashLen+gapLen;
+  const offset = raceState.scrollOffset % period;
+  ctx.strokeStyle = 'rgba(242,179,61,0.75)';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([dashLen, gapLen]);
+  for(let i=1;i<CONFIG.LANE_COUNT;i++){
+    const x = roadLeft + laneWidth*i;
+    ctx.beginPath();
+    ctx.lineDashOffset = -offset;
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // traffic cars (with motion blur)
+  const sortedTraffic = traffic.slice().sort((a,b)=>a.y-b.y);
+  for(const car of sortedTraffic){
+    drawTrafficCar(car);
+  }
+
+  // player car
+  drawPlayerCar();
+}
+
+function drawTrafficCar(car){
+  const playerSpeedMs = player.speedKmh/3.6;
+  const carSpeedMs = car.speedKmh/3.6;
+  const relSpeed = Math.abs(playerSpeedMs - carSpeedMs);
+  const blurStrength = Math.min(1, relSpeed / 45);
+
+  if(blurStrength > 0.15){
+    const trailCount = Math.round(2 + blurStrength*3);
+    for(let i=trailCount;i>=1;i--){
+      const a = (1 - i/(trailCount+1)) * 0.22 * blurStrength;
+      ctx.save();
+      ctx.globalAlpha = a;
+      drawCarShape(car.x, car.y - i*6*Math.sign(playerSpeedMs-carSpeedMs || 1), car.w, car.h, car.color, car.tilt || 0);
+      ctx.restore();
+    }
+  }
+  drawCarShape(car.x, car.y, car.w, car.h, car.color, car.tilt || 0);
+}
+
+function drawPlayerCar(){
+  drawCarShape(player.x, playerScreenY(), 34, 60, '#3fd6c5', player.tilt, true);
+}
+
+function drawCarShape(cx, cy, w, h, color, tilt, isPlayer){
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(tilt || 0);
+
+  // soft shadow
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(0, h*0.32, w*0.55, h*0.22, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // body
+  const r = w*0.32;
+  ctx.beginPath();
+  roundRectPath(-w/2, -h/2, w, h, r);
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // windshield
+  ctx.fillStyle = 'rgba(10,14,20,0.55)';
+  ctx.beginPath();
+  roundRectPath(-w*0.32, -h*0.14, w*0.64, h*0.32, 4);
+  ctx.fill();
+
+  if(isPlayer){
+    ctx.shadowColor = 'rgba(63,214,197,0.9)';
+    ctx.shadowBlur = 16;
+    ctx.strokeStyle = 'rgba(63,214,197,0.9)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    roundRectPath(-w/2, -h/2, w, h, r);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // headlight/taillight accents
+  ctx.fillStyle = isPlayer ? '#dffaf6' : '#ffe6b3';
+  ctx.fillRect(-w*0.36, -h*0.48, w*0.18, 4);
+  ctx.fillRect(w*0.18, -h*0.48, w*0.18, 4);
+  ctx.fillStyle = 'rgba(239,74,74,0.85)';
+  ctx.fillRect(-w*0.36, h*0.44, w*0.18, 4);
+  ctx.fillRect(w*0.18, h*0.44, w*0.18, 4);
+
+  ctx.restore();
+}
+
+function roundRectPath(x,y,w,h,r){
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+/* =========================================================================
+   SPEED DIAL (SVG gauge, drawn once per frame via attribute updates)
+   ========================================================================= */
+function renderSpeedDial(){
+  const pct = player.speedKmh / CONFIG.MAX_SPEED_KMH;
+  const startAngle = Math.PI; // 180deg (left)
+  const endAngle = Math.PI * 2; // 360deg (right), sweeping through bottom
+  const angle = startAngle + pct * (endAngle - startAngle);
+  const cx = 75, cy = 88, r = 62;
+  const needleX = cx + Math.cos(angle) * (r-12);
+  const needleY = cy + Math.sin(angle) * (r-12);
+
+  const arcPoints = [];
+  const steps = 40;
+  for(let i=0;i<=steps;i++){
+    const a = startAngle + (i/steps)*(endAngle-startAngle);
+    arcPoints.push(`${cx+Math.cos(a)*r},${cy+Math.sin(a)*r}`);
+  }
+  const progressSteps = Math.round(pct*steps);
+  const progressPoints = arcPoints.slice(0, progressSteps+1).join(' ');
+
+  speedDial.innerHTML = `
+    <polyline points="${arcPoints.join(' ')}" fill="none" stroke="#2a3140" stroke-width="9" stroke-linecap="round"/>
+    <polyline points="${progressPoints}" fill="none" stroke="${pct>0.85?'#ef4a4a':'#f2b33d'}" stroke-width="9" stroke-linecap="round"/>
+    <line x1="${cx}" y1="${cy}" x2="${needleX}" y2="${needleY}" stroke="#3fd6c5" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="4.5" fill="#3fd6c5"/>
+    <text x="${cx}" y="${cy-22}" text-anchor="middle" font-family="Rajdhani, sans-serif" font-weight="700" font-size="22" fill="#f4f1e8">${Math.round(player.speedKmh)}</text>
+    <text x="${cx}" y="${cy-8}" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" letter-spacing="1" fill="#5c6372">KM/H</text>
+  `;
+}
+
+/* =========================================================================
+   HUD TEXT UPDATE
+   ========================================================================= */
+function formatTime(s){
+  const m = Math.floor(s/60);
+  const sec = s%60;
+  return `${String(m).padStart(2,'0')}:${sec.toFixed(3).padStart(6,'0')}`;
+}
+function updateHud(){
+  hudScore.textContent = Math.floor(raceState.score).toLocaleString();
+  hudTimer.textContent = formatTime(raceState.elapsed);
+  const pct = Math.min(100, (raceState.distanceM / CONFIG.RACE_DISTANCE_M) * 100);
+  progressFill.style.width = pct.toFixed(1) + '%';
+  progressLabel.textContent = `${pct.toFixed(0)}% of race distance`;
+  renderSpeedDial();
+  const narrowEl = document.getElementById('narrowWarning');
+  if(raceState.narrowZoneAnnounced){
+    narrowEl.classList.remove('hidden');
+  }
+}
+
+/* =========================================================================
+   MAIN LOOP
+   ========================================================================= */
+function loop(now){
+  if(raceState.phase === 'running'){
+    let dt = (now - raceState.lastFrameT) / 1000;
+    raceState.lastFrameT = now;
+    dt = Math.min(dt, 0.05); // clamp for tab-switch hiccups
+    updateRace(dt);
+    render();
+    updateHud();
+  }
+  if(raceState.phase === 'running' || raceState.phase === 'countdown'){
+    rafId = requestAnimationFrame(loop);
+  }
+}
+
+/* =========================================================================
+   RACE LIFECYCLE
+   ========================================================================= */
+function startCountdown(){
+  raceState.phase = 'countdown';
+  raceState.countdownValue = 3;
+  countdownOverlay.classList.remove('hidden');
+  countdownOverlay.textContent = '3';
+  render();
+  const tick = ()=>{
+    raceState.countdownValue -= 1;
+    if(raceState.countdownValue <= 0){
+      countdownOverlay.textContent = 'GO!';
+      setTimeout(()=>{
+        countdownOverlay.classList.add('hidden');
+        beginRunning();
+      }, 500);
+    } else {
+      countdownOverlay.textContent = String(raceState.countdownValue);
+      setTimeout(tick, 800);
+    }
+  };
+  setTimeout(tick, 800);
+}
+
+function beginRunning(){
+  raceState.phase = 'running';
+  raceState.lastFrameT = performance.now();
+  rafId = requestAnimationFrame(loop);
+}
+
+function endRace(status){
+  raceState.phase = 'ended';
+  raceState.endedStatus = status;
+  cancelAnimationFrame(rafId);
+  render();
+
+  const timeStr = formatTime(raceState.elapsed);
+  const record = {
+    name: currentPlayerInfo.name,
+    employeeId: currentPlayerInfo.employeeId,
+    location: currentPlayerInfo.location,
+    timeTaken: timeStr,
+    timeTakenSeconds: Math.round(raceState.elapsed*1000)/1000,
+    status: status === 'completed' ? 'Completed' : (status === 'crashed' ? 'Crashed' : 'Incomplete'),
+    score: Math.floor(raceState.score),
+    topSpeedKmh: Math.round(raceState.topSpeedReached),
+    timestamp: new Date().toISOString(),
+  };
+  saveRecord(record);
+  showResultScreen(record);
+}
+
+function showResultScreen(record){
+  const badgeClassMap = { 'Completed':'completed', 'Crashed':'crashed', 'Incomplete':'incomplete' };
+  const titleMap = {
+    'Completed': 'Race Finished!',
+    'Crashed': 'You Crashed',
+    'Incomplete': "Time's Up",
+  };
+  resultBadge.className = 'result-badge ' + badgeClassMap[record.status];
+  resultBadge.textContent = record.status.toUpperCase();
+  resultTitle.textContent = titleMap[record.status];
+  resultTime.textContent = record.timeTaken;
+  resultScore.textContent = record.score.toLocaleString();
+  resultTopSpeed.textContent = record.topSpeedKmh + ' km/h';
+  showScreen('result');
+}
+
+/* =========================================================================
+   RECORD STORAGE (localStorage — persists on this browser/device)
+   ========================================================================= */
+function loadRecords(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){
+    console.error('Failed to load records', e);
+    return [];
+  }
+}
+function saveRecord(record){
+  const all = loadRecords();
+  all.push(record);
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  }catch(e){
+    console.error('Failed to save record', e);
+  }
+  syncRecordToRemote(record);
+}
+
+// Sends this single result to the shared central endpoint, if one is configured.
+// This never blocks or interrupts gameplay/UI — failures are logged only.
+function syncRecordToRemote(record){
+  if(!CONFIG.REMOTE_ENDPOINT_URL) return;
+  const payload = Object.assign({ secret: CONFIG.REMOTE_SHARED_SECRET }, record);
+  fetch(CONFIG.REMOTE_ENDPOINT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
+    body: JSON.stringify(payload),
+  }).catch(err => {
+    console.warn('Central tracking sync failed (result was still saved locally):', err);
+  });
+}
+
+/* =========================================================================
+   INFO SCREEN -> START FLOW
+   ========================================================================= */
+btnStart.addEventListener('click', ()=>{
+  const name = inputName.value.trim();
+  const empId = inputEmpId.value.trim();
+  const locEl = document.querySelector('input[name="location"]:checked');
+
+  if(!name || !empId || !locEl){
+    infoError.textContent = 'Please fill in your name, employee ID, and select a location.';
+    return;
+  }
+  infoError.textContent = '';
+  currentPlayerInfo = { name, employeeId: empId, location: locEl.value };
+
+  resetGameState();
+  showScreen('game');
+  resizeCanvas();
+  player.x = laneCenterX(1); // start centered (middle lane)
+  raceState.spawnTimer = 1.0;
+  startCountdown();
+});
+
+btnPlayAgain.addEventListener('click', ()=>{
+  showScreen('info');
+});
+
+document.getElementById('btnExit').addEventListener('click', ()=>{
+  const note = document.getElementById('exitNote');
+  window.close();
+  // Most browsers only allow scripts to close tabs they themselves opened.
+  // If we're still here after trying, guide the person to close it manually.
+  note.textContent = "You can close this browser tab now.";
+});
+
+/* =========================================================================
+   ADMIN PANEL
+   ========================================================================= */
+async function sha256Hex(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// Helper exposed for whoever administers this file to generate a new password hash.
+// Usage in browser console: await generatePasswordHash("newPassword")
+window.generatePasswordHash = async function(pw){
+  const hash = await sha256Hex(pw);
+  console.log('New ADMIN_PASSWORD_HASH:', hash);
+  return hash;
+};
+
+function openAdmin(){
+  adminOverlay.classList.remove('hidden');
+  renderPasswordGate();
+}
+function closeAdmin(){
+  adminOverlay.classList.add('hidden');
+}
+adminLinkBtn.addEventListener('click', openAdmin);
+adminCloseBtn.addEventListener('click', closeAdmin);
+adminOverlay.addEventListener('click', (e)=>{ if(e.target === adminOverlay) closeAdmin(); });
+
+function renderPasswordGate(){
+  adminBody.innerHTML = `
+    <div class="pw-gate">
+      <div style="color:var(--text-mid);font-size:13px;">Enter the admin password to view race records.</div>
+      <input type="password" id="adminPwInput" placeholder="Password" autocomplete="off">
+      <div class="hint-err" id="adminPwError"></div>
+      <button class="btn btn-primary" id="adminPwSubmit">Unlock</button>
+    </div>
+  `;
+  const input = document.getElementById('adminPwInput');
+  const submit = document.getElementById('adminPwSubmit');
+  const err = document.getElementById('adminPwError');
+  input.focus();
+  const tryUnlock = async ()=>{
+    const val = input.value;
+    const hash = await sha256Hex(val);
+    if(hash === CONFIG.ADMIN_PASSWORD_HASH){
+      renderRecordsTable();
+    } else {
+      err.textContent = 'Incorrect password.';
+      input.value = '';
+      input.focus();
+    }
+  };
+  submit.addEventListener('click', tryUnlock);
+  input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') tryUnlock(); });
+}
+
+function renderRecordsTable(){
+  const records = loadRecords();
+  const remoteNote = CONFIG.REMOTE_ENDPOINT_URL
+    ? `Central tracking is ON — results also sync to your shared sheet. This table is this device's local copy.`
+    : `Central tracking is OFF — this table only shows results played on this device/browser.`;
+
+  if(records.length === 0){
+    adminBody.innerHTML = `
+      <div class="admin-toolbar">
+        <div class="admin-note">${records.length} record(s) on this device · ${remoteNote}</div>
+      </div>
+      <div class="empty-state">No race records yet. Play a race to generate data.</div>
+    `;
+    return;
+  }
+
+  const rows = records.map(r => `
+    <tr>
+      <td>${escapeHtml(r.name)}</td>
+      <td>${escapeHtml(r.employeeId)}</td>
+      <td>${escapeHtml(r.location)}</td>
+      <td>${escapeHtml(r.timeTaken)}</td>
+      <td><span class="status-pill ${r.status.toLowerCase()}">${escapeHtml(r.status)}</span></td>
+      <td>${r.score.toLocaleString()}</td>
+    </tr>
+  `).join('');
+
+  adminBody.innerHTML = `
+    <div class="admin-toolbar">
+      <div class="admin-note">${records.length} record(s) on this device · ${remoteNote}</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" id="btnClearRecords">Clear All</button>
+        <button class="btn btn-primary" id="btnExportExcel">Export to Excel</button>
+      </div>
+    </div>
+    <table class="records">
+      <thead>
+        <tr>
+          <th>Name</th><th>Employee ID</th><th>Location</th><th>Time Taken</th><th>Status</th><th>Score</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  document.getElementById('btnExportExcel').addEventListener('click', exportToExcel);
+  document.getElementById('btnClearRecords').addEventListener('click', ()=>{
+    if(confirm('This will permanently delete all stored race records on this device. Continue?')){
+      localStorage.removeItem(STORAGE_KEY);
+      renderRecordsTable();
+    }
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function exportToExcel(){
+  const records = loadRecords();
+  if(!window.XLSX){
+    alert('Excel export library failed to load. Check your internet connection and try again.');
+    return;
+  }
+  const sheetData = records.map(r => ({
+    'Name': r.name,
+    'Employee ID': r.employeeId,
+    'Location': r.location,
+    'Time Taken (mm:ss.mmm)': r.timeTaken,
+    'Race Status': r.status,
+    'Score': r.score,
+    'Top Speed (km/h)': r.topSpeedKmh,
+    'Recorded At': r.timestamp,
+  }));
+  const ws = XLSX.utils.json_to_sheet(sheetData);
+  ws['!cols'] = [ {wch:22},{wch:16},{wch:12},{wch:18},{wch:14},{wch:10},{wch:16},{wch:24} ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Race Records');
+  const dateStr = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `Nightlane_Race_Report_${dateStr}.xlsx`);
+}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+resetGameState();
+resizeCanvas();
+showScreen('info');
+
+})();
+</script>
+</body>
+</html>
