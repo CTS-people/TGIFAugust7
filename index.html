@@ -611,7 +611,7 @@ const CONFIG = {
 CONFIG.RACE_DISTANCE_M = (CONFIG.MAX_SPEED_KMH / 3.6) * CONFIG.RACE_SECONDS_AT_MAX_SPEED;
 CONFIG.NARROW_ZONE_SECONDS = 15; // final stretch, timed as if still at max speed
 CONFIG.NARROW_ZONE_DISTANCE_M = (CONFIG.MAX_SPEED_KMH / 3.6) * CONFIG.NARROW_ZONE_SECONDS;
-CONFIG.NARROW_WIDTH_FACTOR = 0.6; // road shrinks to 60% of its regular width in the final stretch
+CONFIG.NARROW_WIDTH_FACTOR = 1; // narrowing disabled — road stays full width for the entire race
 
 const STORAGE_KEY = "nightlane_race_records_v1";
 
